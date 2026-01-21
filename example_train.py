@@ -1,13 +1,11 @@
 """
 Example training script for TOMIC.
 
-This script demonstrates how to train TOMIC models using different domain adaptation approaches.
+This script demonstrates how to train TOMIC models using DSN (Domain Separation Network).
 You can modify the paths and parameters according to your needs.
 
 Available training methods:
 - DSN (Domain Separation Network) - Recommended for TOMIC
-- DANN (Domain Adversarial Neural Network)
-- ADDA (Adversarial Discriminative Domain Adaptation)
 - Usual (Standard supervised learning)
 
 Available model types:
@@ -15,7 +13,6 @@ Available model types:
 - "patch": Patch-based Transformer model
 - "expr": Expression-based Transformer model
 - "name": Gene name-based Transformer model (ranked tokenization) - Recommended
-- "dual": Dual Transformer model combining name and expression features
 """
 
 import sys
@@ -32,7 +29,6 @@ from tomic.dataset.dataconfig import TomicDataConfig
 # Choose one of the following training methods and corresponding model configs:
 # Option 1: DSN (Domain Separation Network) - Recommended for TOMIC
 from tomic.model.dsn import (
-    DualTransformerModelConfig4DSN,
     ExprTransformerModelConfig4DSN,
     MLPModelConfig4DSN,
     NameTransformerModelConfig4DSN,
@@ -41,31 +37,8 @@ from tomic.model.dsn import (
 from tomic.train.dsn.train import test, train
 from tomic.train.dsn.train_config import TrainerConfig
 
-# Option 2: DANN (Domain Adversarial Neural Network)
-# from tomic.model.dann import (
-#     DualTransformerModelConfig,
-#     ExprModelConfig,
-#     MLPModelConfig,
-#     NameModelConfig,
-#     PatchModelConfig,
-# )
-# from tomic.train.dann.train import test, train
-# from tomic.train.dann.train_config import TrainerConfig
-
-# Option 3: ADDA (Adversarial Discriminative Domain Adaptation)
-# from tomic.model.adda import (
-#     DualTransformerModelConfig,
-#     ExprModelConfig,
-#     MLPModelConfig,
-#     NameModelConfig,
-#     PatchModelConfig,
-# )
-# from tomic.train.adda.train import test, train
-# from tomic.train.adda.train_config import TrainerConfig
-
-# Option 4: Usual (Standard supervised learning)
+# Option 2: Usual (Standard supervised learning)
 # from tomic.model.usual import (
-#     DualTransformerModelConfig,
 #     ExprModelConfig,
 #     MLPModelConfig,
 #     NameModelConfig,
@@ -102,7 +75,7 @@ def main():
     # ============================================================================
     # Step 3: Configure model architecture
     # ============================================================================
-    # Choose model type: "mlp", "patch", "expr", "name", or "dual"
+    # Choose model type: "mlp", "patch", "expr", or "name"
     # Recommended: "name" (Name Transformer) for best performance
     model_type = "name"
 
@@ -141,17 +114,6 @@ def main():
             dropout=0.1,
             activation="gelu",
             hidden_dims=[32, 32],
-        )
-    elif model_type == "dual":
-        # Dual Transformer model (combines name and expression)
-        model_args = DualTransformerModelConfig4DSN(
-            dropout=0.1,
-            activation="gelu",
-            hidden_size=40,
-            num_heads_cross_attn=4,
-            num_layers_cross_attn=1,
-            num_heads_encoder=4,
-            num_layers_encoder=1,
         )
     else:
         raise ValueError(f"Unknown model type: {model_type}")

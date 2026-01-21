@@ -19,8 +19,8 @@ TOMIC addresses this challenge by leveraging paired primary tumor and metastatic
 ## Key Features
 
 - **Domain Separation Network (DSN)**: Separates domain-shared and domain-private features to enable effective domain adaptation
-- **Multiple Model Architectures**: Supports MLP, Patch Transformer, Expression Transformer, Name Transformer, and Dual Transformer models
-- **Multiple Domain Adaptation Methods**: Implements DSN, DANN (Domain Adversarial Neural Network), and ADDA (Adversarial Discriminative Domain Adaptation)
+- **Multiple Model Architectures**: Supports MLP, Patch Transformer, Expression Transformer, and Name Transformer models
+- **Domain Separation Network**: Implements DSN for effective domain adaptation
 - **Ranked Gene Name-based Tokenization**: Genes are ordered by within-cell expression magnitude to form a deterministic token sequence
 - **Comprehensive Evaluation**: Evaluation on both synthetic datasets with gold-standard labels and real paired metastasis datasets with silver-standard labels
 
@@ -117,7 +117,7 @@ We provide a minimal example script (`example_train.py`) that demonstrates how t
 2. Modify the model type and training parameters as needed:
 
    ```python
-   model_type = "name"  # Choose: "mlp", "patch", "expr", "name", or "dual"
+   model_type = "name"  # Choose: "mlp", "patch", "expr", or "name"
    ```
 
 3. Run the script:
@@ -135,8 +135,8 @@ The script will:
 
 **Features:**
 
-- Supports all model types: MLP, Patch, Expression, Name, and Dual Transformer
-- Supports multiple training methods: DSN, DANN, ADDA, and standard supervised learning
+- Supports all model types: MLP, Patch, Expression, and Name Transformer
+- Supports DSN training method and standard supervised learning
 - Includes detailed comments and documentation
 - Automatically saves test results to JSON file
 
@@ -164,8 +164,8 @@ We provide convenient one-click training scripts in the `scripts/` directory tha
    - Set `PYTHON` path to your Python interpreter
    - Set `DATA_PATH` to your data directory
    - Set `RAW_DATA_DIR` if processing raw data
-   - Configure training parameters (batch size, learning rate, etc.)
-   - Choose which training methods to run (`RUN_DSN`, `RUN_DANN`, `RUN_ADDA`, `RUN_USUAL`)
+- Configure training parameters (batch size, learning rate, etc.)
+  - Choose which training methods to run (`RUN_DSN`, `RUN_USUAL`)
 
 2. Run the script:
 
@@ -176,8 +176,8 @@ bash scripts/GSE173958_M1_1200.sh
 These scripts will:
 
 - Process raw data (if needed) or use existing processed data
-- Train multiple model architectures (MLP, Patch, Expression, Name, Dual)
-- Run multiple domain adaptation methods (DSN, DANN, ADDA) and standard supervised learning
+- Train multiple model architectures (MLP, Patch, Expression, Name)
+- Run DSN domain adaptation method and standard supervised learning
 - Save checkpoints and logs automatically
 
 #### DSN (Domain Separation Network) Training
@@ -193,7 +193,7 @@ Or run directly with Python:
 
 ```bash
 python train_val_scripts/main_dsn.py \
-    --train_models "['mlp', 'patch', 'expr', 'name', 'dual']" \
+    --train_models "['mlp', 'patch', 'expr', 'name']" \
     --data_path /path/to/your/data \
     --default_root_dir /path/to/output \
     --run_training 1 \
@@ -212,14 +212,11 @@ python train_val_scripts/main_dsn.py \
 - **patch**: Patch-based Transformer model
 - **expr**: Expression-based Transformer model
 - **name**: Gene name-based Transformer model (ranked tokenization)
-- **dual**: Dual Transformer model combining name and expression features
 
-#### Other Training Methods
+#### Standard Supervised Learning
 
-Similar scripts are available for other domain adaptation methods:
+For standard supervised learning without domain adaptation:
 
-- **DANN**: `train_val_scripts/main_dann.py` / `run_dann_template.sh`
-- **ADDA**: `train_val_scripts/main_adda.py` / `run_adda_template.sh`
 - **Standard Supervised**: `train_val_scripts/main_usual.py` / `run_usual_template.sh`
 
 ### Testing
@@ -304,22 +301,16 @@ TOMIC/
 │   │   └── preprocessing.py    # Data preprocessing utilities
 │   ├── model/                  # Model architectures
 │   │   ├── dsn/                # Domain Separation Network models
-│   │   ├── dann/               # Domain Adversarial Neural Network models
-│   │   ├── adda/               # Adversarial Discriminative Domain Adaptation models
 │   │   ├── usual/              # Standard supervised learning models
 │   │   └── encoder_decoder/    # Encoder-decoder architectures
 │   ├── train/                  # Training scripts
 │   │   ├── dsn/                # DSN training configuration
-│   │   ├── dann/               # DANN training configuration
-│   │   ├── adda/               # ADDA training configuration
 │   │   └── usual/              # Standard training configuration
 │   ├── utils.py                # Utility functions for metrics computation
 │   └── logger.py               # Logging utilities
 ├── example_train.py            # Minimal example training script
 ├── train_val_scripts/          # Main training scripts
 │   ├── main_dsn.py             # DSN training entry point
-│   ├── main_dann.py            # DANN training entry point
-│   ├── main_adda.py            # ADDA training entry point
 │   ├── main_usual.py           # Standard training entry point
 │   └── run_*_template.sh       # Shell script templates
 ├── scripts/                    # One-click training scripts
@@ -357,7 +348,6 @@ The model uses Transformer encoders with different tokenization strategies:
 - **Name-based**: Genes ordered by expression magnitude
 - **Patch-based**: Expression values divided into patches
 - **Expression-based**: Direct expression value encoding
-- **Dual**: Combines name and expression features
 
 ## Data Configuration
 
