@@ -4,21 +4,21 @@ from pathlib import Path
 
 sys.path.append("/your/path/to/TOMIC")
 
-from datmp.dataset.dataconfig import DatmpDataConfig
-from datmp.model.adda import (
+from tomic.dataset.dataconfig import TomicDataConfig
+from tomic.model.adda import (
     DualTransformerModelConfig,
     ExprModelConfig,
     MLPModelConfig,
     NameModelConfig,
     PatchModelConfig,
 )
-from datmp.train.adda.train import main as train_func
-from datmp.train.adda.train_config import TrainerConfig
+from tomic.train.adda.train import main as train_func
+from tomic.train.adda.train_config import TrainerConfig
 
 
 def train(
     model_type: str,
-    data_args: DatmpDataConfig,
+    data_args: TomicDataConfig,
     training_args: TrainerConfig,
     base_model_args: dict = None,
     mlp_model_args: dict = None,
@@ -129,7 +129,7 @@ def arg_parser():
     # Parse bingings list
     bingings = eval(args.bingings) if args.bingings else [None]
 
-    data_args = DatmpDataConfig.from_json_or_kwargs(
+    data_args = TomicDataConfig.from_json_or_kwargs(
         Path(args.data_path) / "info_config.json",
     )
 

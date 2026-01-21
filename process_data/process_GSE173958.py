@@ -18,9 +18,8 @@ import random
 import anndata as ad
 import pandas as pd
 import scanpy as sc
-
-from datmp import get_logger
-from datmp.dataset.preprocessing import (
+from tomic import get_logger
+from tomic.dataset.preprocessing import (
     GET_GEN_FLAG,
     preprocess,
 )

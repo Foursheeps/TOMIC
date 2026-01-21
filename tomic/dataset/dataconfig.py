@@ -31,7 +31,7 @@ from pathlib import Path
 """
 
 
-class DatmpDataConfig:
+class TomicDataConfig:
     """Data loading configuration parameters.
 
     Attributes:
@@ -65,8 +65,8 @@ class DatmpDataConfig:
         self.num_classes = num_classes
 
     @staticmethod
-    def from_json_or_kwargs(json_path: Path | str, **kwargs) -> "DatmpDataConfig":
-        """Load DatmpDataConfig from JSON file or kwargs.
+    def from_json_or_kwargs(json_path: Path | str, **kwargs) -> "TomicDataConfig":
+        """Load TomicDataConfig from JSON file or kwargs.
         If kwargs are provided, they will override the values in the JSON file.
 
         The JSON file should contain:
@@ -79,7 +79,7 @@ class DatmpDataConfig:
             json_path: Path to JSON config file
             kwargs: Keyword arguments to override the values in the JSON file
         Returns:
-            DatmpDataConfig instance
+            TomicDataConfig instance
         """
 
         data = dict()
@@ -92,11 +92,11 @@ class DatmpDataConfig:
 
         data.update(kwargs)
 
-        return DatmpDataConfig(**data)
+        return TomicDataConfig(**data)
 
     def __repr__(self) -> str:
         return f"""
-        DatmpDataConfig(
+        TomicDataConfig(
             root_data_path={str(self.root_data_path)},
             binning={self.binning},
             class_map={self.class_map},
@@ -108,5 +108,5 @@ if __name__ == "__main__":
     config_path = Path(
         "/your/path/to/TOMIC/expertments/data_process/GSE173958_processed/GSE173958_M1_1200/info_config.json"
     )
-    data_config = DatmpDataConfig.from_json_or_kwargs(config_path, binning=121)
+    data_config = TomicDataConfig.from_json_or_kwargs(config_path, binning=121)
     print(data_config)

@@ -19,8 +19,8 @@ from sklearn.datasets import make_classification
 # Add project root to Python path
 sys.path.append("/your/path/to/TOMIC")
 
-from datmp import get_logger
-from datmp.dataset.preprocessing import (
+from tomic import get_logger
+from tomic.dataset.preprocessing import (
     GET_GEN_FLAG,
     preprocess,
 )

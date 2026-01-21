@@ -46,7 +46,7 @@ def GET_GEN_FLAG(m: Path) -> bool:
     return files, flag
 
 
-class DatmpPreprocessor:
+class TomicPreprocessor:
     """
     Preprocessor for single-cell RNA-seq data using scanpy pipeline.
 
@@ -77,7 +77,7 @@ class DatmpPreprocessor:
         **kwargs,
     ):
         """
-        Initialize DatmpPreprocessor.
+        Initialize TomicPreprocessor.
 
         Args:
             target_sum: Target sum for normalization. Must be positive.
@@ -133,7 +133,7 @@ class DatmpPreprocessor:
         8. Build neighbor graph
         9. Compute UMAP embedding
 
-        Note: Binning is handled in DatasetDatmp.setup(), not in preprocessing.
+        Note: Binning is handled in DatasetTomic.setup(), not in preprocessing.
 
         Args:
             adata: AnnData object to preprocess. Should contain raw count data in adata.X.
@@ -247,11 +247,11 @@ class DatmpPreprocessor:
     #     return adata
 
 
-class MultiDatmpPreprocessor(DatmpPreprocessor):
+class MultiTomicPreprocessor(TomicPreprocessor):
     """
-    Preprocessor for multiple Datmp objects (e.g., primary and metastasis datasets).
+    Preprocessor for multiple Tomic objects (e.g., primary and metastasis datasets).
 
-    Extends DatmpPreprocessor to handle preprocessing and visualization of
+    Extends TomicPreprocessor to handle preprocessing and visualization of
     multiple related datasets simultaneously.
     """
 
@@ -260,21 +260,21 @@ class MultiDatmpPreprocessor(DatmpPreprocessor):
         *adatasets: ad.AnnData,
     ) -> tuple[ad.AnnData, ...]:
         """
-        Preprocess multiple Datmp objects independently.
+        Preprocess multiple Tomic objects independently.
 
         Each AnnData object is preprocessed using the same preprocessing parameters
         (n_highly_variable_genes, max_value, target_sum) defined in the instance.
 
         Args:
-            *adatasets: Variable number of Datmp objects to preprocess.
+            *adatasets: Variable number of Tomic objects to preprocess.
                 Each should contain raw count data in adata.X.
 
         Returns:
-            Tuple of preprocessed Datmp objects, in the same order as input.
-            Each preprocessed Datmp has the same structure as returned by preprocess().
+            Tuple of preprocessed Tomic objects, in the same order as input.
+            Each preprocessed Tomic has the same structure as returned by preprocess().
 
         Raises:
-            ValueError: If no Datmp objects are provided
+            ValueError: If no Tomic objects are provided
         """
         if not adatasets:
             raise ValueError("At least one AnnData object must be provided")
@@ -289,7 +289,7 @@ class MultiDatmpPreprocessor(DatmpPreprocessor):
         save_plots: bool = True,
     ) -> tuple[ad.AnnData, ad.AnnData | None, ad.AnnData | None]:
         """
-        Preprocess multiple Datmp objects and generate UMAP visualizations.
+        Preprocess multiple Tomic objects and generate UMAP visualizations.
 
         This method preprocesses the combined dataset and optionally the metastasis and primary
         datasets separately, then generates multiple UMAP plots:
@@ -300,11 +300,11 @@ class MultiDatmpPreprocessor(DatmpPreprocessor):
 
         Args:
             output_dir: Directory to save plots. Will be created if it doesn't exist.
-            combined_adata: Combined Datmp object containing all data. Must have 'dataset' and
+            combined_adata: Combined Tomic object containing all data. Must have 'dataset' and
                 'organ' columns in obs.
-            metastasis_adata: Metastasis Datmp object (optional). If provided, will be preprocessed
+            metastasis_adata: Metastasis Tomic object (optional). If provided, will be preprocessed
                 separately and a metastasis-specific UMAP will be generated.
-            primary_adata: Primary Datmp object (optional). If provided, will be preprocessed
+            primary_adata: Primary Tomic object (optional). If provided, will be preprocessed
                 separately and a primary-specific UMAP will be generated.
             save_plots: Whether to save plots to files. If True, plots are saved to output_dir.
                 If False, plots are only displayed (if show=True) or not shown.
@@ -505,7 +505,7 @@ def preprocess(
     # 2. Preprocess data
     logger.info("Preprocessing data with scanpy...")
 
-    preprocessor = MultiDatmpPreprocessor(
+    preprocessor = MultiTomicPreprocessor(
         subset_hvg=n_highly_variable_genes,
         batch_key=batch_key,
         **kwargs,

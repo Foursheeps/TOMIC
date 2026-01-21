@@ -3,10 +3,10 @@ from .dataset import (
     INFO_CONFIG,
     PRIMARY_METASTASIS_H5AD,
     VOCAB_PATH,
-    DatmpDataConfig,
     DomainDataModuleCommon,
-    DomainDataModuleDatmp,
-    MultiDatmpPreprocessor,
+    DomainDataModuleTomic,
+    MultiTomicPreprocessor,
+    TomicDataConfig,
     preprocess,
 )
 from .logger import get_logger, logger, setup_logger
@@ -31,14 +31,14 @@ __all__ = [
     "get_logger",
     "setup_logger",
     # Data configurations
-    "DatmpDataConfig",
+    "TomicDataConfig",
     "DomainDataModuleCommon",
-    "DomainDataModuleDatmp",
+    "DomainDataModuleTomic",
     "GET_GEN_FLAG",
     "INFO_CONFIG",
     "PRIMARY_METASTASIS_H5AD",
     "VOCAB_PATH",
-    "MultiDatmpPreprocessor",
+    "MultiTomicPreprocessor",
     "preprocess",
     # Model configurations
     "DualTransformerModel4DSN",

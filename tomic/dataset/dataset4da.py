@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 
 from .abc import DatasetABC, DomainDataModuleABC
-from .dataconfig import DatmpDataConfig
+from .dataconfig import TomicDataConfig
 from .preprocessing import PRIMARY_METASTASIS_H5AD
 from .scgpt_preprocess import _digitize, _get_obs_rep
 
@@ -67,7 +67,7 @@ class OneDomainDataset(Dataset):
         return return_dict
 
 
-class DatasetDatmp(DatasetABC):
+class DatasetTomic(DatasetABC):
     def __init__(
         self,
         anndata_source: ad.AnnData,
@@ -145,10 +145,10 @@ class DatasetDatmp(DatasetABC):
         return return_dict
 
 
-class DomainDataModuleDatmp(DomainDataModuleABC):
+class DomainDataModuleTomic(DomainDataModuleABC):
     def __init__(
         self,
-        data_config: DatmpDataConfig,
+        data_config: TomicDataConfig,
         train_batch_size: int = 32,
         test_batch_size: int = 32,
         num_workers: int = 0,
@@ -156,7 +156,7 @@ class DomainDataModuleDatmp(DomainDataModuleABC):
         random_state: int = 42,
     ):
         """
-        DataModule for Datmp format (gene name sequences with expression values).
+        DataModule for Tomic format (gene name sequences with expression values).
 
         Args:
             train_batch_size: Batch size for training
@@ -184,7 +184,7 @@ class DomainDataModuleDatmp(DomainDataModuleABC):
         # Key for storing binned data in layers
         self.result_binned_key = "X_binned"
 
-        # Expose data_config attributes for easy access (matching DatmpDataConfig structure)
+        # Expose data_config attributes for easy access (matching TomicDataConfig structure)
         self.class_map = self.data_config.class_map
         self.num_classes = self.data_config.num_classes
         self.root_data_path = self.data_config.root_data_path
@@ -262,9 +262,9 @@ class DomainDataModuleDatmp(DomainDataModuleABC):
             stratify=source.obs["organ"],
         )
 
-        self.train_dataset = DatasetDatmp(source_train, target_train)
-        self.val_dataset = DatasetDatmp(source_test, target_test)
-        self.test_dataset = DatasetDatmp(source_test, target_test)
+        self.train_dataset = DatasetTomic(source_train, target_train)
+        self.val_dataset = DatasetTomic(source_test, target_test)
+        self.test_dataset = DatasetTomic(source_test, target_test)
 
     def set4extract_embedding(self):
         adata = ad.read_h5ad(self.data_config.root_data_path / PRIMARY_METASTASIS_H5AD)

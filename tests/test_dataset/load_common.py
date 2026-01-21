@@ -13,10 +13,9 @@ from pathlib import Path
 sys.path.append("/your/path/to/TOMIC")
 
 import torch
-
-from datmp import get_logger
-from datmp.dataset.dataconfig import DatmpDataConfig
-from datmp.dataset.dataset4common import DomainDataModuleCommon
+from tomic import get_logger
+from tomic.dataset.dataconfig import TomicDataConfig
+from tomic.dataset.dataset4common import DomainDataModuleCommon
 
 # Use unified logger
 logger = get_logger("data_process")
@@ -49,15 +48,15 @@ def test_data_module(
     root_data_path = Path(root_data_path)
     logger.info(f"Loading data from: {root_data_path}")
 
-    # Load or create DatmpDataConfig
+    # Load or create TomicDataConfig
     config_path = root_data_path / "info_config.json"
     if config_path.exists():
         logger.info(f"Loading config from: {config_path}")
-        data_config = DatmpDataConfig.from_json_or_kwargs(config_path, binning=binning)
+        data_config = TomicDataConfig.from_json_or_kwargs(config_path, binning=binning)
     else:
-        logger.warning(f"Config file not found at {config_path}, creating DatmpDataConfig manually")
-        # Create minimal DatmpDataConfig - this may fail if required fields are missing
-        data_config = DatmpDataConfig(
+        logger.warning(f"Config file not found at {config_path}, creating TomicDataConfig manually")
+        # Create minimal TomicDataConfig - this may fail if required fields are missing
+        data_config = TomicDataConfig(
             root_data_path=root_data_path,
             binning=binning,
         )

@@ -7,28 +7,28 @@ This module provides base dataset classes and implementations for different data
 - Fusion format (gene names + expression)
 """
 
-from .dataconfig import DatmpDataConfig
+from .dataconfig import TomicDataConfig
 from .dataset4common import DomainDataModuleCommon
-from .dataset4da import DomainDataModuleDatmp
+from .dataset4da import DomainDataModuleTomic
 from .preprocessing import (
     GET_GEN_FLAG,
     INFO_CONFIG,
     PRIMARY_METASTASIS_H5AD,
     VOCAB_PATH,
-    MultiDatmpPreprocessor,
+    MultiTomicPreprocessor,
     preprocess,
 )
 
 # Create class_map aliases for backward compatibility
 
 __all__ = [
-    "DatmpDataConfig",
+    "TomicDataConfig",
     "DomainDataModuleCommon",
-    "DomainDataModuleDatmp",
+    "DomainDataModuleTomic",
     "GET_GEN_FLAG",
     "INFO_CONFIG",
     "PRIMARY_METASTASIS_H5AD",
     "VOCAB_PATH",
-    "MultiDatmpPreprocessor",
+    "MultiTomicPreprocessor",
     "preprocess",
 ]

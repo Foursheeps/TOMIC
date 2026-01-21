@@ -1,5 +1,5 @@
 """
-Unified logging configuration for the datmp project.
+Unified logging configuration for the tomic project.
 
 This module provides a centralized logger configuration that can be used
 throughout the entire project. It sets up consistent logging format and
@@ -12,17 +12,17 @@ from pathlib import Path
 
 
 def setup_logger(
-    name: str = "datmp",
+    name: str = "tomic",
     level: int | str = logging.INFO,
     log_file: str | Path | None = None,
     format_string: str | None = None,
     date_format: str = "%Y-%m-%d %H:%M:%S",
 ) -> logging.Logger:
     """
-    Set up and configure a logger for the datmp project.
+    Set up and configure a logger for the tomic project.
 
     Args:
-        name: Logger name. Defaults to "datmp".
+        name: Logger name. Defaults to "tomic".
         level: Logging level (e.g., logging.INFO, logging.DEBUG, "INFO", "DEBUG").
                Can be an integer or string.
         log_file: Optional path to log file. If provided, logs will also be written to file.
@@ -85,28 +85,28 @@ def setup_logger(
 def get_logger(name: str | None = None) -> logging.Logger:
     """
     Get a logger instance. If name is provided, returns a child logger.
-    Otherwise, returns the main datmp logger.
+    Otherwise, returns the main tomic logger.
 
     Args:
         name: Optional logger name. If provided, creates a child logger
-              (e.g., "datmp.dataset" or "datmp.model").
+              (e.g., "tomic.dataset" or "tomic.model").
 
     Returns:
         Logger instance.
 
     Examples:
-        >>> logger = get_logger()  # Returns main datmp logger
-        >>> logger = get_logger("dataset")  # Returns datmp.dataset logger
+        >>> logger = get_logger()  # Returns main tomic logger
+        >>> logger = get_logger("dataset")  # Returns tomic.dataset logger
     """
     if name is None:
-        # Return main datmp logger
-        return logging.getLogger("datmp")
+        # Return main tomic logger
+        return logging.getLogger("tomic")
     else:
         # Return child logger
-        return logging.getLogger(f"datmp.{name}")
+        return logging.getLogger(f"tomic.{name}")
 
 
-# Initialize the main datmp logger
-logger = setup_logger("datmp", level=logging.INFO)
+# Initialize the main tomic logger
+logger = setup_logger("tomic", level=logging.INFO)
 
 __all__ = ["setup_logger", "get_logger", "logger"]

@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
 from .abc import DatasetABC
-from .dataconfig import DatmpDataConfig
+from .dataconfig import TomicDataConfig
 from .preprocessing import PRIMARY_METASTASIS_H5AD
 from .scgpt_preprocess import _digitize, _get_obs_rep
 
@@ -70,7 +70,7 @@ class Datasetcommon(DatasetABC):
 class DomainDataModuleCommon(pl.LightningDataModule):
     def __init__(
         self,
-        data_config: DatmpDataConfig,
+        data_config: TomicDataConfig,
         train: Literal["source", "target", "both"] = "source",
         train_batch_size: int = 32,
         test_batch_size: int = 32,
@@ -93,7 +93,7 @@ class DomainDataModuleCommon(pl.LightningDataModule):
         # Key for storing binned data in layers
         self.result_binned_key = "X_binned"
 
-        # Expose data_config attributes for easy access (matching DatmpDataConfig structure)
+        # Expose data_config attributes for easy access (matching TomicDataConfig structure)
         self.class_map = self.data_config.class_map
         self.num_classes = self.data_config.num_classes
         self.root_data_path = self.data_config.root_data_path

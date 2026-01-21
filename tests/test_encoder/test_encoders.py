@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test all encoder modules from datmp/model/encoder_decoder.
+Test all encoder modules from tomic/model/encoder_decoder.
 
 This script tests all encoder types to ensure they can process input data correctly:
 - MLPEncoder: Vector-encoded data (floating-point vectors)
@@ -21,13 +21,12 @@ from pathlib import Path
 sys.path.append("/your/path/to/TOMIC")
 
 import torch
-
-from datmp import get_logger
-from datmp.model.encoder_decoder.dual import DualTransformerEncoder
-from datmp.model.encoder_decoder.expr import ExpressionTransformerEncoder
-from datmp.model.encoder_decoder.mlp import MLPEncoder
-from datmp.model.encoder_decoder.name import NameTransformerEncoder
-from datmp.model.encoder_decoder.patch import PatchTransformerEncoder
+from tomic import get_logger
+from tomic.model.encoder_decoder.dual import DualTransformerEncoder
+from tomic.model.encoder_decoder.expr import ExpressionTransformerEncoder
+from tomic.model.encoder_decoder.mlp import MLPEncoder
+from tomic.model.encoder_decoder.name import NameTransformerEncoder
+from tomic.model.encoder_decoder.patch import PatchTransformerEncoder
 
 logger = get_logger("test_encoder")
 

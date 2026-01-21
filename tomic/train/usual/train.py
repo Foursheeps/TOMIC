@@ -9,8 +9,8 @@ This script trains standard supervised learning models supporting multiple model
 - dual: Dual Transformer
 
 Usage:
-    python -m datmp.train.usual.train --model_type name --lr 1e-3
-    python -m datmp.train.usual.train config.json
+    python -m tomic.train.usual.train --model_type name --lr 1e-3
+    python -m tomic.train.usual.train config.json
 """
 
 import json
@@ -24,7 +24,7 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.strategies import DDPStrategy
 from transformers.hf_argparser import HfArgumentParser
 
-from ...dataset.dataconfig import DatmpDataConfig
+from ...dataset.dataconfig import TomicDataConfig
 from ...dataset.dataset4common import DomainDataModuleCommon
 from ...logger import get_logger
 from ...model.usual import (
@@ -133,7 +133,7 @@ def find_checkpoint(save_dir: Path, checkpoint_path: str | None = None) -> Path 
 
 
 def create_data_module_ann(
-    data_args: DatmpDataConfig,
+    data_args: TomicDataConfig,
     training_args: TrainerConfig,
     train_domain: str = "source",
 ) -> DomainDataModuleCommon:
@@ -161,7 +161,7 @@ def create_data_module_ann(
 
 
 def create_data_module_token(
-    data_args: DatmpDataConfig,
+    data_args: TomicDataConfig,
     training_args: TrainerConfig,
     train_domain: str = "source",
 ) -> DomainDataModuleCommon:
@@ -322,14 +322,14 @@ def log_training_completion(
 def parse_args(
     model_type: Literal["name", "patch", "mlp", "expr", "dual"],
 ) -> tuple[
-    DatmpDataConfig,
+    TomicDataConfig,
     _ConfigT,
     TrainerConfig,
 ]:
     # Parse arguments
     config_class = MODEL_CONFIG_MAP[model_type]
 
-    parser = HfArgumentParser((DatmpDataConfig, config_class, TrainerConfig))
+    parser = HfArgumentParser((TomicDataConfig, config_class, TrainerConfig))
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # Parse from JSON file
         data_args, model_args, training_args = parser.parse_json_file(json_file=Path(sys.argv[1]).absolute())
@@ -346,7 +346,7 @@ def parse_args(
 
 
 def create_data_module(
-    data_args: DatmpDataConfig,
+    data_args: TomicDataConfig,
     training_args: TrainerConfig,
     model_type: Literal["name", "patch", "mlp", "expr", "dual"],
     train_domain: str = "source",
@@ -378,7 +378,7 @@ def create_data_module(
 
 
 def create_model(
-    data_args: DatmpDataConfig,
+    data_args: TomicDataConfig,
     model_args: _ConfigT,
     training_args: TrainerConfig,
     model_type: Literal["name", "patch", "mlp", "expr", "dual"] = "name",
@@ -485,7 +485,7 @@ def create_model(
 
 
 def train(
-    data_args: DatmpDataConfig,
+    data_args: TomicDataConfig,
     model_args: _ConfigT,
     training_args: TrainerConfig,
     model_type: Literal["patch", "mlp", "name", "expr", "dual"],
@@ -544,7 +544,7 @@ def train(
 
 
 def test(
-    data_args: DatmpDataConfig,
+    data_args: TomicDataConfig,
     model_args: _ConfigT,
     training_args: TrainerConfig,
     model_type: Literal["name", "patch", "mlp", "expr", "dual"] = "name",
@@ -626,7 +626,7 @@ def test(
 
 
 def main(
-    data_args: DatmpDataConfig = None,
+    data_args: TomicDataConfig = None,
     model_args: _ConfigT = None,
     training_args: TrainerConfig = None,
     model_type: Literal["name", "patch", "mlp", "expr", "dual"] = "name",

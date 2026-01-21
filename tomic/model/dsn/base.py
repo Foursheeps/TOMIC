@@ -122,7 +122,7 @@ class BaseLightningModule(pl.LightningModule, ABC):
     #     Get embeddings using shared encoder.
 
     #     Args:
-    #         batch: Batch dictionary from DatasetDatmp containing:
+    #         batch: Batch dictionary from DatasetTomic containing:
     #             - s_cell_id, t_cell_id: Cell identifiers
     #             - s_gene_ids, t_gene_ids: Gene ID sequences
     #             - s_expr_ids, t_expr_ids: Expression IDs (if binned)

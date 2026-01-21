@@ -19,17 +19,17 @@ from pathlib import Path
 # Add project root to Python path
 sys.path.append("/your/path/to/TOMIC")
 
-from datmp import get_logger
-from datmp.dataset.dataconfig import DatmpDataConfig
-from datmp.model.dsn import (
+from tomic import get_logger
+from tomic.dataset.dataconfig import TomicDataConfig
+from tomic.model.dsn import (
     DualTransformerModelConfig4DSN,
     ExprTransformerModelConfig4DSN,
     MLPModelConfig4DSN,
     NameTransformerModelConfig4DSN,
     PatchTransformerModelConfig4DSN,
 )
-from datmp.train.dsn.train import main as train_dsn_func
-from datmp.train.dsn.train_config import TrainerConfig
+from tomic.train.dsn.train import main as train_dsn_func
+from tomic.train.dsn.train_config import TrainerConfig
 
 # Use unified logger
 logger = get_logger("test_dsn_models")
@@ -188,7 +188,7 @@ def test_dsn_models(model_type: str, devices: int = 1, binning: int | None = 50)
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found: {config_path}")
 
-    data_args = DatmpDataConfig.from_json_or_kwargs(config_path, binning=binning)
+    data_args = TomicDataConfig.from_json_or_kwargs(config_path, binning=binning)
     data_args.root_data_path = DEFAULT_DATA_PATH
 
     # Create model config

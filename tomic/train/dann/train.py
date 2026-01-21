@@ -1,7 +1,7 @@
 """
-Unified training script for ADDA models.
+Unified training script for DANN models.
 
-This script trains Adversarial Discriminative Domain Adaptation models supporting multiple model types:
+This script trains Domain Adversarial Neural Networks supporting multiple model types:
 - name: Name-based Transformer
 - patch: Patch-based Transformer
 - mlp: MLP encoder
@@ -9,8 +9,8 @@ This script trains Adversarial Discriminative Domain Adaptation models supportin
 - dual: Dual Transformer
 
 Usage:
-    python -m datmp.train.adda.train --model_type name --lr 1e-3
-    python -m datmp.train.adda.train config.json
+    python -m tomic.train.dann.train --model_type name --lr 1e-3
+    python -m tomic.train.dann.train config.json
 """
 
 import json
@@ -20,14 +20,14 @@ from pathlib import Path
 from typing import Literal
 
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import Callback, EarlyStopping, ModelCheckpoint
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.strategies import DDPStrategy
 from transformers.hf_argparser import HfArgumentParser
 
-from ...dataset.dataconfig import DatmpDataConfig
-from ...dataset.dataset4da import DomainDataModuleDatmp
+from ...dataset.dataconfig import TomicDataConfig
+from ...dataset.dataset4da import DomainDataModuleTomic
 from ...logger import get_logger
-from ...model.adda import (
+from ...model.dann import (
     DualTransformerModelConfig,
     ExprModelConfig,
     LightningModuleDual,
@@ -42,7 +42,7 @@ from ...model.adda import (
 from .train_config import TrainerConfig
 
 # Get logger
-logger = get_logger("train_adda")
+logger = get_logger("train_dann")
 
 
 # Model type to config class mapping
@@ -65,121 +65,16 @@ MODEL_TYPE_MAP = {
 
 # Model type descriptions
 MODEL_DESCRIPTIONS = {
-    "name": "Name-based Transformer ADDA",
-    "patch": "Patch-based Transformer ADDA",
-    "mlp": "MLP-based ADDA",
-    "expr": "Expression-based Transformer ADDA",
-    "dual": "Dual Transformer ADDA",
+    "name": "Name-based Transformer DANN",
+    "patch": "Patch-based Transformer DANN",
+    "mlp": "MLP-based DANN",
+    "expr": "Expression-based Transformer DANN",
+    "dual": "Dual Transformer DANN",
 }
 
 # Type alias for model config classes
 _ConfigT = NameModelConfig | PatchModelConfig | MLPModelConfig | ExprModelConfig | DualTransformerModelConfig
 _ModelT = LightningModuleName | LightningModulePatch | LightningModuleMLP | LightningModuleExpr | LightningModuleDual
-
-
-# ============================================================================
-# Callback Classes
-# ============================================================================
-
-
-class StageAwareEarlyStopping(Callback):
-    """Custom callback that switches between pretrain and adversarial early stopping callbacks."""
-
-    def __init__(
-        self,
-        pretrain_early_stop: EarlyStopping,
-        adversarial_early_stop: EarlyStopping,
-        pretrain_epochs: int,
-    ):
-        super().__init__()
-        self.pretrain_early_stop = pretrain_early_stop
-        self.adversarial_early_stop = adversarial_early_stop
-        self.pretrain_epochs = pretrain_epochs
-        self.current_early_stop = pretrain_early_stop
-        self.stage_switched = False
-
-    def on_train_epoch_start(self, trainer, pl_module):
-        if trainer.current_epoch >= self.pretrain_epochs and not self.stage_switched:
-            logger.info(f"Switching from pretrain to adversarial early stopping at epoch {trainer.current_epoch + 1}")
-            self.current_early_stop = self.adversarial_early_stop
-            self.stage_switched = True
-            if hasattr(self.adversarial_early_stop, "wait_count"):
-                self.adversarial_early_stop.wait_count = 0
-            if hasattr(self.adversarial_early_stop, "stopped_epoch"):
-                self.adversarial_early_stop.stopped_epoch = 0
-            if hasattr(self.pretrain_early_stop, "wait_count"):
-                self.pretrain_early_stop.wait_count = float("inf")
-
-    def on_validation_end(self, trainer, pl_module):
-        if self.current_early_stop == self.pretrain_early_stop:
-            self.pretrain_early_stop.on_validation_end(trainer, pl_module)
-        else:
-            if not hasattr(self.adversarial_early_stop, "best_score"):
-                original_evaluate = self.adversarial_early_stop._evaluate_stopping_criteria
-
-                def safe_evaluate(current):
-                    if not hasattr(self.adversarial_early_stop, "best_score"):
-                        import torch
-
-                        self.adversarial_early_stop.best_score = (
-                            current.clone() if isinstance(current, torch.Tensor) else current
-                        )
-                        return False, None
-                    return original_evaluate(current)
-
-                self.adversarial_early_stop._evaluate_stopping_criteria = safe_evaluate
-                try:
-                    self.adversarial_early_stop.on_validation_end(trainer, pl_module)
-                finally:
-                    self.adversarial_early_stop._evaluate_stopping_criteria = original_evaluate
-            else:
-                self.adversarial_early_stop.on_validation_end(trainer, pl_module)
-
-    def on_train_end(self, trainer, pl_module):
-        if self.current_early_stop == self.pretrain_early_stop:
-            self.pretrain_early_stop.on_train_end(trainer, pl_module)
-        else:
-            self.adversarial_early_stop.on_train_end(trainer, pl_module)
-
-
-class StageAwareModelCheckpoint(ModelCheckpoint):
-    """Custom ModelCheckpoint that switches monitoring metric based on training stage."""
-
-    def __init__(
-        self,
-        pretrain_monitor: str,
-        adversarial_monitor: str,
-        pretrain_epochs: int,
-        pretrain_mode: str = "max",
-        adversarial_mode: str = "max",
-        **kwargs,
-    ):
-        super().__init__(monitor=pretrain_monitor, mode=pretrain_mode, **kwargs)
-        self.pretrain_monitor = pretrain_monitor
-        self.adversarial_monitor = adversarial_monitor
-        self.pretrain_epochs = pretrain_epochs
-        self.pretrain_mode = pretrain_mode
-        self.adversarial_mode = adversarial_mode
-        self.stage_switched = False
-
-    def on_train_epoch_start(self, trainer, pl_module):
-        if trainer.current_epoch >= self.pretrain_epochs and not self.stage_switched:
-            logger.info(
-                f"Switching ModelCheckpoint monitor from '{self.pretrain_monitor}' to "
-                f"'{self.adversarial_monitor}' at epoch {trainer.current_epoch + 1}"
-            )
-            self.monitor = self.adversarial_monitor
-            self.mode = self.adversarial_mode
-            self.stage_switched = True
-            self.best_model_score = None
-            self.best_model_path = None
-            self.kth_best_model_path = None
-            self.kth_value = None
-            self.last_model_path = None
-            if hasattr(self, "best_k_models"):
-                self.best_k_models = {}
-            if hasattr(self, "kth_best_model_paths"):
-                self.kth_best_model_paths = []
 
 
 # ============================================================================
@@ -226,40 +121,25 @@ def find_checkpoint(save_dir: Path, checkpoint_path: str | None = None) -> Path 
         return None
 
 
-def create_callbacks(training_args: TrainerConfig) -> tuple[Callback, ModelCheckpoint]:
-    """Create training callbacks for ADDA two-stage training."""
-    pretrain_early_stop = EarlyStopping(
-        monitor=training_args.pretrain_monitor_metric,
-        mode=training_args.pretrain_mode,
-        patience=training_args.pretrain_patience,
+def create_callbacks(training_args: TrainerConfig) -> tuple[EarlyStopping, ModelCheckpoint]:
+    """Create training callbacks."""
+    early_stop_callback = EarlyStopping(
+        monitor=training_args.monitor_metric,
+        mode=training_args.mode,
+        patience=training_args.patience,
         verbose=True,
         min_delta=0.0001,
     )
-    adversarial_early_stop = EarlyStopping(
-        monitor=training_args.adversarial_monitor_metric,
-        mode=training_args.adversarial_mode,
-        patience=training_args.adversarial_patience,
-        verbose=True,
-        min_delta=0.0001,
-    )
-    stage_aware_early_stop = StageAwareEarlyStopping(
-        pretrain_early_stop=pretrain_early_stop,
-        adversarial_early_stop=adversarial_early_stop,
-        pretrain_epochs=training_args.pretrain_epochs,
-    )
-    checkpoint_callback = StageAwareModelCheckpoint(
-        pretrain_monitor=training_args.pretrain_monitor_metric,
-        adversarial_monitor=training_args.adversarial_monitor_metric,
-        pretrain_epochs=training_args.pretrain_epochs,
-        pretrain_mode=training_args.pretrain_mode,
-        adversarial_mode=training_args.adversarial_mode,
-        filename="epoch={epoch:03d}-step={step:09d}-{monitor}={monitor_value:.4f}",
-        auto_insert_metric_name=True,
+    checkpoint_callback = ModelCheckpoint(
+        filename="epoch={epoch:03d}-step={step:09d}-val_tar_acc={val/target_accuracy:.4f}",
+        auto_insert_metric_name=False,
+        monitor=training_args.monitor_metric,
+        mode=training_args.mode,
         save_top_k=training_args.save_top_k,
         save_last=True,
         verbose=True,
     )
-    return stage_aware_early_stop, checkpoint_callback
+    return early_stop_callback, checkpoint_callback
 
 
 def create_trainer(training_args: TrainerConfig, callbacks: list) -> pl.Trainer:
@@ -317,9 +197,9 @@ def log_training_completion(
 
 def parse_args(
     model_type: Literal["name", "patch", "mlp", "expr", "dual"],
-) -> tuple[DatmpDataConfig, _ConfigT, TrainerConfig]:
+) -> tuple[TomicDataConfig, _ConfigT, TrainerConfig]:
     config_class = MODEL_CONFIG_MAP[model_type]
-    parser = HfArgumentParser((DatmpDataConfig, config_class, TrainerConfig))
+    parser = HfArgumentParser((TomicDataConfig, config_class, TrainerConfig))
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         data_args, model_args, training_args = parser.parse_json_file(json_file=Path(sys.argv[1]).absolute())
     else:
@@ -332,9 +212,9 @@ def parse_args(
 # ============================================================================
 
 
-def create_data_module(data_args: DatmpDataConfig, training_args: TrainerConfig) -> DomainDataModuleDatmp:
+def create_data_module(data_args: TomicDataConfig, training_args: TrainerConfig) -> DomainDataModuleTomic:
     """Create data module."""
-    return DomainDataModuleDatmp(
+    return DomainDataModuleTomic(
         data_config=data_args,
         train_batch_size=training_args.train_batch_size,
         test_batch_size=training_args.test_batch_size,
@@ -348,7 +228,7 @@ def create_data_module(data_args: DatmpDataConfig, training_args: TrainerConfig)
 
 
 def create_model(
-    data_args: DatmpDataConfig,
+    data_args: TomicDataConfig,
     model_args: _ConfigT,
     training_args: TrainerConfig,
     model_type: Literal["name", "patch", "mlp", "expr", "dual"] = "name",
@@ -364,7 +244,7 @@ def create_model(
             activation=model_args.activation,
             num_classes=data_args.num_classes,
             lr=training_args.lr,
-            pretrain_epochs=training_args.pretrain_epochs,
+            gamma=training_args.gamma,
             scheduler_type=training_args.scheduler_type,
             warmup_ratio=training_args.warmup_ratio,
             num_epochs=training_args.max_epochs,
@@ -381,7 +261,7 @@ def create_model(
             num_layers=model_args.num_layers,
             num_classes=data_args.num_classes,
             lr=training_args.lr,
-            pretrain_epochs=training_args.pretrain_epochs,
+            gamma=training_args.gamma,
             scheduler_type=training_args.scheduler_type,
             warmup_ratio=training_args.warmup_ratio,
             num_epochs=training_args.max_epochs,
@@ -395,7 +275,7 @@ def create_model(
             activation=model_args.activation,
             num_classes=data_args.num_classes,
             lr=training_args.lr,
-            pretrain_epochs=training_args.pretrain_epochs,
+            gamma=training_args.gamma,
             scheduler_type=training_args.scheduler_type,
             warmup_ratio=training_args.warmup_ratio,
             num_epochs=training_args.max_epochs,
@@ -411,7 +291,7 @@ def create_model(
             activation=model_args.activation,
             num_classes=data_args.num_classes,
             lr=training_args.lr,
-            pretrain_epochs=training_args.pretrain_epochs,
+            gamma=training_args.gamma,
             scheduler_type=training_args.scheduler_type,
             warmup_ratio=training_args.warmup_ratio,
             num_epochs=training_args.max_epochs,
@@ -430,7 +310,7 @@ def create_model(
             activation=model_args.activation,
             num_classes=data_args.num_classes,
             lr=training_args.lr,
-            pretrain_epochs=training_args.pretrain_epochs,
+            gamma=training_args.gamma,
             scheduler_type=training_args.scheduler_type,
             warmup_ratio=training_args.warmup_ratio,
             num_epochs=training_args.max_epochs,
@@ -447,7 +327,7 @@ def create_model(
 
 
 def train(
-    data_args: DatmpDataConfig,
+    data_args: TomicDataConfig,
     model_args: _ConfigT,
     training_args: TrainerConfig,
     model_type: Literal["patch", "mlp", "name", "expr", "dual"],
@@ -456,8 +336,8 @@ def train(
     pl.seed_everything(training_args.seed)
     data_module = create_data_module(data_args, training_args)
     model = create_model(data_args, model_args, training_args, model_type)
-    stage_aware_early_stop, checkpoint_callback = create_callbacks(training_args)
-    trainer = create_trainer(training_args, [stage_aware_early_stop, checkpoint_callback])
+    early_stop_callback, checkpoint_callback = create_callbacks(training_args)
+    trainer = create_trainer(training_args, [early_stop_callback, checkpoint_callback])
     logger.info("=" * 80)
     logger.info(f"Starting Training: {MODEL_DESCRIPTIONS[model_type]}")
     logger.info("=" * 80)
@@ -466,7 +346,7 @@ def train(
 
 
 def test(
-    data_args: DatmpDataConfig,
+    data_args: TomicDataConfig,
     model_args: _ConfigT,
     training_args: TrainerConfig,
     model_type: Literal["name", "patch", "mlp", "expr", "dual"] = "name",
@@ -514,7 +394,7 @@ def test(
 
 
 def main(
-    data_args: DatmpDataConfig = None,
+    data_args: TomicDataConfig = None,
     model_args: _ConfigT = None,
     training_args: TrainerConfig = None,
     model_type: Literal["name", "patch", "mlp", "expr", "dual"] = "name",

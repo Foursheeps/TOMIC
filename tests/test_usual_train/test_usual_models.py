@@ -8,16 +8,16 @@ from pathlib import Path
 
 sys.path.append("/your/path/to/TOMIC")
 
-from datmp.dataset.dataconfig import DatmpDataConfig
-from datmp.model.usual import (
+from tomic.dataset.dataconfig import TomicDataConfig
+from tomic.model.usual import (
     DualTransformerModelConfig,
     ExprModelConfig,
     MLPModelConfig,
     NameModelConfig,
     PatchModelConfig,
 )
-from datmp.train.usual.train import main as train_usual_func
-from datmp.train.usual.train_config import TrainerConfig
+from tomic.train.usual.train import main as train_usual_func
+from tomic.train.usual.train_config import TrainerConfig
 
 # Paths
 DATA_PATH = Path("/your/path/to/TOMIC/expertments/data_process/synthetic_processed/synthetic_400")
@@ -135,7 +135,7 @@ def test_model(model_type, devices, binning, train_domain):
     if not config_path.exists():
         raise FileNotFoundError(f"Config not found: {config_path}")
 
-    data_args = DatmpDataConfig.from_json_or_kwargs(config_path, binning=binning, root_data_path=DATA_PATH)
+    data_args = TomicDataConfig.from_json_or_kwargs(config_path, binning=binning, root_data_path=DATA_PATH)
 
     # Create model and training configs
     model_config = model_configs.get(model_type, model_configs["default"])
