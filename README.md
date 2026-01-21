@@ -3,6 +3,9 @@
 This is the official codebase for **TOMIC: A Transformer-based Domain Separation Network for Organ-specific Metastasis-Initiating Cell Identification**.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.8.0-orange.svg)](https://pytorch.org/)
+[![PyTorch Lightning](https://img.shields.io/badge/PyTorch%20Lightning-2.5.5-blue.svg)](https://www.pytorchlightning.ai/)
 
 ## Overview
 
@@ -20,7 +23,6 @@ TOMIC addresses this challenge by leveraging paired primary tumor and metastatic
 
 - **Domain Separation Network (DSN)**: Separates domain-shared and domain-private features to enable effective domain adaptation
 - **Multiple Model Architectures**: Supports MLP, Patch Transformer, Expression Transformer, and Name Transformer models
-- **Domain Separation Network**: Implements DSN for effective domain adaptation
 - **Ranked Gene Name-based Tokenization**: Genes are ordered by within-cell expression magnitude to form a deterministic token sequence
 - **Comprehensive Evaluation**: Evaluation on both synthetic datasets with gold-standard labels and real paired metastasis datasets with silver-standard labels
 
@@ -76,28 +78,54 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("Seurat")
 ```
 
-## Quick Start
+## Datasets and Data Preparation
+
+We evaluate TOMIC on one synthetic dataset and four real-world single-cell RNA sequencing datasets covering different cancer types and metastatic patterns.
+
+### Dataset Summary
+
+#### Synthetic Dataset
+
+- **SYNC (Synthetic)**: Contains 240,000 cells with 14,000 genes, simulating metastasis to four different organs (liver, lung, stomach, and peritoneum). Highly variable genes: 1,200.
+
+#### Real-World Datasets
+
+| Dataset | Primary Organ | Metastatic Organ | Total Cells | Total Genes | Highly Variable Genes | Links |
+|---------|---------------|------------------|-------------|-------------|----------------------|-------|
+| [GSE249057](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE249057) | Esophageal | Lung | 13,378 | 33,538 | 2,000 | [NCBI GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE249057) |
+| [GSE173958](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE173958) | Pancreatic | Peritoneal, Liver, Lung | 29,734 | 31,054 | 1,200 | [NCBI GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE173958) |
+| [GSE123902](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE123902) | Lung | Brain, Adrenal, Bone | 51,910 | 22,854 | 1,200 | [NCBI GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE123902) |
+| [GSE163558](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE163558) | Gastric | Liver, Peritoneum, Ovary, Lymph node | 36,425 | 33,538 | 1,200 | [NCBI GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE163558) |
+
+The synthetic dataset simulates multi-organ metastasis scenarios, while real-world datasets represent different cancer types with various metastatic patterns. Highly variable genes are selected for dimensionality reduction and feature extraction.
+
+### Data Availability
+
+- **Synthetic data generation scripts** and data preprocessing pipeline: [`process_data/create_syncdata.py`](https://github.com/Foursheeps/TOMIC/blob/master/process_data/create_syncdata.py)
+- **Processed datasets**: Available for download from [Google Drive](https://drive.google.com/drive/folders/1FWPz5vch_eleUW_2JuAlbzmiIHmwcsS5?usp=sharing)
 
 ### Data Preparation
 
-- **Download processed data**: Processed datasets are available from [Google Drive](https://drive.google.com/drive/folders/1FWPz5vch_eleUW_2JuAlbzmiIHmwcsS5?usp=sharing)
+**Option 1: Download processed data (recommended)**
 
-- if you want to test the model from scratch, you can download the raw data and process it yourself.
+Processed datasets are available from [Google Drive](https://drive.google.com/drive/folders/1FWPz5vch_eleUW_2JuAlbzmiIHmwcsS5?usp=sharing). Simply download and extract the data to your desired location.
 
-    1. **Download raw data** (optional): Raw datasets are available from NCBI GEO:
-  - [GSE173958](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE173958)
-  - [GSE249057](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE249057)
-  - [GSE123902](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE123902)
-  - [GSE163558](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE163558)
+**Option 2: Process raw data from scratch**
 
-    1. **Process raw data** (optional): Use the scripts in `process_data/` to process raw datasets:
+If you want to process the data yourself:
 
-    ```bash
-    python process_data/create_syncdata.py
-    python process_data/process_GSE173958.py
-    python process_data/process_GSE123902.py
-    python process_data/process_GSE163558.py
-    ```
+1. **Download raw data**: Raw datasets are available from NCBI GEO (links above).
+
+2. **Process raw data**: Use the scripts in `process_data/` to process raw datasets:
+
+   ```bash
+   python process_data/create_syncdata.py
+   python process_data/process_GSE173958.py
+   python process_data/process_GSE123902.py
+   python process_data/process_GSE163558.py
+   ```
+
+## Quick Start
 
 ### Training
 
@@ -164,10 +192,11 @@ We provide convenient one-click training scripts in the `scripts/` directory tha
    - Set `PYTHON` path to your Python interpreter
    - Set `DATA_PATH` to your data directory
    - Set `RAW_DATA_DIR` if processing raw data
+
 - Configure training parameters (batch size, learning rate, etc.)
   - Choose which training methods to run (`RUN_DSN`, `RUN_USUAL`)
 
-2. Run the script:
+1. Run the script:
 
 ```bash
 bash scripts/GSE173958_M1_1200.sh
@@ -374,11 +403,20 @@ The model reports the following metrics:
 - **AUC**: Area under the ROC curve (binary) or macro-averaged AUC (multi-class)
 - **F1 Score**: Macro, micro, and weighted F1 scores
 
-## Data Availability
+## Domain Adaptation Effectiveness Assessment
 
-- **Synthetic data generation scripts** and data preprocessing pipeline: [GitHub Repository](https://github.com/Foursheeps/TOMIC)
-- **Raw datasets**: Available via [NCBI GEO](https://www.ncbi.nlm.nih.gov/geo/)
-- **Processed datasets**: Available for download from [Google Drive](https://drive.google.com/drive/folders/1FWPz5vch_eleUW_2JuAlbzmiIHmwcsS5?usp=sharing)
+To assess domain adaptation effectiveness across all datasets, we examine the DANN (Domain Adversarial Neural Network) loss convergence. The DANN loss converges towards the theoretical optimal value of $\log(2) \approx 0.693$ for all four real-world datasets:
+
+- **GSE249057**: Esophageal cancer with temporal progression
+- **GSE173958_M1**: Pancreatic cancer with multi-organ metastasis
+- **GSE163558**: Gastric cancer with metastasis to liver, peritoneum, ovary, and lymph nodes
+- **GSE123902**: Lung cancer with metastasis to brain, adrenal, and bone
+
+The convergence to $\log(2)$ indicates successful domain alignment where the discriminator cannot distinguish between primary and metastatic organ domains. This consistent convergence pattern across different cancer types (esophageal, pancreatic, gastric, and lung) and various metastatic sites demonstrates the robustness of the domain adaptation approach in handling organ-specific distribution shifts in single-cell transcriptomic data.
+
+![DANN loss convergence](assests/dann_loss_name.png)
+
+**Figure 2: DANN loss convergence curves for Transformer[GeneName] model across different real-world datasets.** The horizontal dashed line at $y=\log(2)$ represents the theoretical convergence threshold.
 
 ## Acknowledgements
 
